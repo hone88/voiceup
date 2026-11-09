@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 投稿：誰でも読める。ログイン（匿名）した人が自分の名義で作成でき、削除は本人だけ。
+    // 更新は「共感（empathizers）に自分を足す／外す」だけ許可。
+    match /posts/{postId} {
+      allow read: if true;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['text', 'cat', 'name', 'uid', 'at', 'empathizers'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 3
+        && request.resource.data.text.size() <= 400
+        && request.resource.data.cat is string
+        && request.resource.data.cat.size() <= 20
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 20
+        && request.resource.data.at == request.time
+        && request.resource.data.empathizers == [];
+
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['empathizers'])
+        && request.resource.data.empathizers.toSet().difference(resource.data.empathizers.toSet()).hasOnly([request.auth.uid])
+        && resource.data.empathizers.toSet().difference(request.resource.data.empathizers.toSet()).hasOnly([request.auth.uid]);
+
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // 通報：作成だけできる。中身はFirebaseの管理画面からだけ見る。
+    match /reports/{reportId} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['postId', 'uid', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && reportId == request.resource.data.postId + '_' + request.auth.uid;
+      allow read, update, delete: if false;
+    }
+  }
+}
