@@ -5,89 +5,84 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>VOICEUP</title>
 <meta name="description" content="思いついた「欲しい」「困った」を、声でそのまま投稿。">
-<meta name="theme-color" content="#f6f7f4" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#121613" media="(prefers-color-scheme: dark)">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Dela+Gothic+One&display=swap">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-  <header>
+
+<!-- ===== Feed ===== -->
+<div id="feedView">
+  <header class="top">
     <div class="logo">VOICE<span>UP</span></div>
-    <div class="tag">Your Voice Creates Value.</div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-sort="new" aria-selected="true">新着</button>
+      <button type="button" role="tab" data-sort="emp" aria-selected="false">共感が多い順</button>
+    </div>
   </header>
+
+  <div class="cats" id="filterChips" aria-label="カテゴリで絞り込む"></div>
   <div id="status" class="notice" hidden></div>
 
-  <!-- 声を出す -->
-  <section id="v-post" hidden>
-    <div id="step-input">
-      <h1>何が欲しい？<br>何に困ってる？</h1>
-      <p class="sub">思ったことを、そのまま話してみよう。</p>
-      <button class="mic" id="micBtn" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
-        <b id="micLabel">声で投稿する</b>
-        <small id="micSub">タップして話すだけ</small>
-      </button>
-      <p class="hint" id="micHint" hidden></p>
+  <!-- Threads-like composer prompt -->
+  <button type="button" class="prompt" id="openCompose2">
+    <span class="av av-anon" aria-hidden="true"></span>
+    <span class="prompt-body">
+      <b>声を出す</b>
+      <span>何が欲しい？何に困ってる？</span>
+    </span>
+    <span class="prompt-mic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+  </button>
 
-      <div class="field">
-        <label class="label" for="text">あなたの声</label>
-        <textarea id="text" maxlength="400" placeholder="例：空きコマに1時間だけ座れる静かな場所が欲しい"></textarea>
-        <div class="count"><span id="cnt">0</span> / 400</div>
+  <main class="list" id="list"><div class="empty">みんなの声を読み込み中…</div></main>
+  <p class="foot" id="stat"></p>
+
+  <button type="button" class="fab" id="openCompose" aria-label="声を出す">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- ===== Compose (Threads-like sheet) ===== -->
+<div id="composeView" class="sheet" role="dialog" aria-modal="true" aria-labelledby="composeTitle" hidden>
+  <div class="sheet-top">
+    <button type="button" class="txtbtn" id="cancel">キャンセル</button>
+    <h2 id="composeTitle">新しい声</h2>
+    <span class="spacer"></span>
+  </div>
+
+  <div class="sheet-body">
+    <div class="draft">
+      <div class="draft-rail">
+        <span class="av" id="draftAv" aria-hidden="true"></span>
+        <span class="rail-line" aria-hidden="true"></span>
       </div>
-      <div class="field">
+      <div class="draft-main">
+        <div class="who-row">
+          <b id="draftName">匿名</b>
+          <button type="button" class="who-toggle" id="whoToggle">ニックネームにする</button>
+        </div>
+        <input id="nick" type="text" maxlength="20" placeholder="ニックネーム（20文字まで）" hidden>
+        <label for="text" class="sr">あなたの声</label>
+        <textarea id="text" maxlength="400" rows="3" placeholder="何が欲しい？何に困ってる？"></textarea>
+
+        <button class="mic" id="micBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          <span><b id="micLabel">声で入力</b><small id="micSub">タップして話すだけ</small></span>
+        </button>
+        <p class="hint" id="micHint" hidden></p>
+
         <p class="label">カテゴリ</p>
         <div class="chips" id="catChips"></div>
       </div>
-      <div class="field">
-        <p class="label">公開のしかた</p>
-        <div class="seg">
-          <button type="button" id="anonOn" aria-pressed="true"><b>匿名で投稿</b><small>名前は表示されない</small></button>
-          <button type="button" id="anonOff" aria-pressed="false"><b>ニックネーム</b><small>好きな名前を表示</small></button>
-        </div>
-        <input id="nick" type="text" maxlength="20" placeholder="ニックネーム（20文字まで）" hidden>
-      </div>
-      <button class="primary" id="toConfirm" type="button" disabled>確認へ進む</button>
     </div>
+  </div>
 
-    <div id="step-confirm" hidden>
-      <h1>この内容で投稿する？</h1>
-      <p class="sub">誤変換や、個人が分かる情報がないか確認しよう。</p>
-      <div class="confirm">
-        <div class="meta"><span class="cat" id="cCat"></span><span id="cAnon"></span></div>
-        <p class="q" id="cText"></p>
-      </div>
-      <button class="primary" id="submit" type="button">投稿する</button>
-      <button class="ghost" id="back" type="button">戻って直す</button>
-    </div>
-  </section>
-
-  <!-- みんなの声 -->
-  <section id="v-feed">
-    <div class="toolbar">
-      <div class="chips" id="filterChips"></div>
-      <div class="actions">
-        <div class="sort">
-          <button type="button" data-sort="new" aria-pressed="true">新着</button>
-          <button type="button" data-sort="emp" aria-pressed="false">共感が多い順</button>
-        </div>
-        <span class="stat" id="stat"></span>
-      </div>
-    </div>
-    <div class="list" id="list"><div class="empty">みんなの声を読み込み中…</div></div>
-  </section>
+  <div class="sheet-foot">
+    <span class="foot-note"><span id="footWho">匿名で投稿されます</span> · <span id="cnt">0</span>/400</span>
+    <button class="post" id="submit" type="button" disabled>投稿</button>
+  </div>
 </div>
 
-<nav>
-  <div class="in" role="tablist">
-    <button role="tab" id="tabFeed" aria-selected="true" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>みんなの声</button>
-    <button role="tab" id="tabPost" aria-selected="false" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>声を出す</button>
-  </div>
-</nav>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script type="module" src="app.js"></script>
